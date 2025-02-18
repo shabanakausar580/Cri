@@ -1,0 +1,111 @@
+name: Run 15 Min Node
+
+on:
+  workflow_dispatch:
+
+jobs:
+  Run15MinNode:
+    runs-on: ubuntu-latest
+    environment: Cricket
+
+    steps:
+    - name: Install Dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y curl wget xorg openbox xvfb libnss3 libatk-bridge2.0-0 libatk1.0-0 libcups2 libx11-xcb1 libxcomposite1 libxrandr2 libgbm1 libnspr4
+        curl -s https://deb.nodesource.com/setup_18.x | sudo bash
+        sudo apt install -y nodejs
+
+    - name: Install Chrome
+      run: |
+        wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        sudo dpkg -i google-chrome-stable_current_amd64.deb || sudo apt --fix-broken install -y
+        sudo dpkg -i google-chrome-stable_current_amd64.deb
+
+    - name: Install Node.js Packages
+      run: npm install puppeteer axios cheerio adm-zip
+      
+    - name: Download Captcha Extension Zip
+      run: |
+        wget https://raw.githubusercontent.com/Junaid0996/Cri/refs/heads/main/captcha.zip -O captcha.zip
+        mkdir -p captcha
+        unzip captcha.zip -d captcha
+
+    - name: Download remote node.js file
+      run: wget ${{secrets.CRICKET_BASH_URL}}/login.js
+
+    - name: Cleanup Failed and Cancelled Workflow Runs
+      env:
+        GITHUB_TOKEN: ${{ secrets.API_KEY }}
+      run: |
+        node <<'EOF'
+        const axios = require('axios');
+
+        const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+        const OWNER = process.env.GITHUB_REPOSITORY.split('/')[0];
+        const REPO = process.env.GITHUB_REPOSITORY.split('/')[1];
+
+        const headers = {
+          Authorization: `Bearer ${GITHUB_TOKEN}`,
+          Accept: 'application/vnd.github.v3+json',
+        };
+
+        async function cleanupWorkflows() {
+          try {
+            let page = 1;
+            let hasMore = true;
+
+            while (hasMore) {
+              const response = await axios.get(
+                `https://api.github.com/repos/${OWNER}/${REPO}/actions/runs`,
+                { headers, params: { per_page: 100, page } }
+              );
+
+              const runs = response.data.workflow_runs;
+
+              const runsToDelete = runs.filter(
+                (run) => run.conclusion === 'cancelled' || run.conclusion === 'failure'
+              );
+
+              for (const run of runsToDelete) {
+                console.log(`Deleting workflow run: ${run.id} (${run.conclusion})`);
+                await axios.delete(
+                  `https://api.github.com/repos/${OWNER}/${REPO}/actions/runs/${run.id}`,
+                  { headers }
+                );
+              }
+
+              hasMore = runs.length === 100;
+              page++;
+            }
+
+            console.log('Cleanup completed successfully.');
+          } catch (error) {
+            console.error('Error during cleanup:', error.response?.data || error.message);
+            process.exit(1);
+          }
+        }
+
+        cleanupWorkflows();
+        EOF
+
+    - name: Run login.js with 15-minute interval
+      run: |
+        while true; do
+          xvfb-run node login.js
+          sleep 900  # Sleep for 15 minutes
+        done
+
+  trigger_workflow:
+    runs-on: ubuntu-latest
+    if: ${{ !cancelled() }}
+    steps:
+      - name: Sleep for 5 hours and 58 minutes
+        run: sleep $((5*3600 + 58*60))
+      - name: Trigger new workflow
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.API_KEY }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/actions/workflows/run15min.yml/dispatches \
+            -d '{"ref":"main"}'
