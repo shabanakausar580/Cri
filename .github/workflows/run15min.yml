@@ -27,7 +27,7 @@ jobs:
       
     - name: Download Captcha Extension Zip
       run: |
-        wget https://raw.githubusercontent.com/Junaid0996/Cri/refs/heads/main/captcha.zip -O captcha.zip
+        wget https://raw.githubusercontent.com/shabanakausar580/Cri/refs/heads/main/captcha.zip -O captcha.zip
         mkdir -p captcha
         unzip captcha.zip -d captcha
 
