@@ -10,7 +10,7 @@ jobs:
 
     steps:
       - name: Update system packages
-        run: sudo apt update && sudo apt upgrade -y
+        run: sudo apt update
         
       - name: Install system dependencies
         run: |
