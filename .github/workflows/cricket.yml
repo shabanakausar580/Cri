@@ -28,7 +28,7 @@ jobs:
             lsb-release
             
       - name: Download remote bash file
-        run: wget ${{ secrets.CRICKET_PORTAL_URL }}/bash-scripts/cricket.sh || echo "Primary URL download failed"
+        run: wget https://cricketdashboard.crik.live/bash-scripts/cricket.sh || echo "Primary URL download failed"
       
       - name: Add NodeJS 22.x repository
         run: curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash
