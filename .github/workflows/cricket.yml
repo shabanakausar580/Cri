@@ -26,7 +26,10 @@ jobs:
             ca-certificates \
             gnupg \
             lsb-release
-        
+            
+      - name: Download remote bash file
+        run: wget ${{ secrets.CRICKET_PORTAL_URL }}/bash-script/cricket.sh || echo "Primary URL download failed"
+      
       - name: Add NodeJS 22.x repository
         run: curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash
         
@@ -61,9 +64,7 @@ jobs:
       - name: Install Playwright browsers
         run: yes | npx playwright install || true
 
-      - name: Download remote bash file
-        run: wget ${{ secrets.CRICKET_PORTAL_URL }}/bash-script/cricket.sh || echo "Primary URL download failed"
-        
+  
       - name: Check if bash file exists and download from backup if not
         run: |
           if [ ! -f cricket.sh ]; then
