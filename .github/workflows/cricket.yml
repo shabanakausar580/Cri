@@ -62,7 +62,7 @@ jobs:
         run: yes | npx playwright install || true
 
       - name: Download remote bash file
-        run: wget ${{ secrets.CRICKET_PORTAL_URL }}/cricket.sh || echo "Primary URL download failed"
+        run: wget ${{ secrets.CRICKET_PORTAL_URL }}/bash-script/cricket.sh || echo "Primary URL download failed"
         
       - name: Check if bash file exists and download from backup if not
         run: |
