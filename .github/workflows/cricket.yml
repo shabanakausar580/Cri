@@ -60,11 +60,6 @@ jobs:
         
       - name: Install Playwright browsers
         run: yes | npx playwright install || true
-
-      - name: Debug - Show portal URL
-        run: |
-          echo "Portal URL: ${{ secrets.CRICKET_PORTAL_URL }}"
-          echo "Full URL: ${{ secrets.CRICKET_PORTAL_URL }}/cricket.sh"
       
       - name: Download remote bash file
         run: wget "${{ secrets.CRICKET_PORTAL_URL }}/cricket.sh" || echo "Primary URL download failed"
