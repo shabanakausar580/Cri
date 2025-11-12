@@ -27,7 +27,7 @@ jobs:
             gnupg \
             lsb-release
         
-      - name: Add NodeJS 22.x repository using curl
+      - name: Add NodeJS 22.x repository
         run: curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash
         
       - name: Install NodeJS
