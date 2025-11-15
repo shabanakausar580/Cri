@@ -92,15 +92,25 @@ jobs:
           const OWNER = process.env.GITHUB_REPOSITORY.split('/')[0];
           const REPO = process.env.GITHUB_REPOSITORY.split('/')[1];
 
+          // GitHub API requires 'token' prefix for personal access tokens
           const headers = {
-            Authorization: `Bearer ${GITHUB_TOKEN}`,
+            Authorization: `token ${GITHUB_TOKEN}`,
             Accept: 'application/vnd.github.v3+json',
           };
 
           async function cleanupWorkflows() {
             try {
+              // Validate token exists
+              if (!GITHUB_TOKEN || GITHUB_TOKEN === '') {
+                console.error('Error: GITHUB_TOKEN is not set');
+                return;
+              }
+
+              console.log(`Starting cleanup for ${OWNER}/${REPO}...`);
+              
               let page = 1;
               let hasMore = true;
+              let totalDeleted = 0;
 
               while (hasMore) {
                 const response = await axios.get(
@@ -114,21 +124,30 @@ jobs:
                   (run) => run.conclusion === 'cancelled' || run.conclusion === 'failure'
                 );
 
+                console.log(`Page ${page}: Found ${runsToDelete.length} runs to delete`);
+
                 for (const run of runsToDelete) {
-                  console.log(`Deleting workflow run: ${run.id} (${run.conclusion})`);
-                  await axios.delete(
-                    `https://api.github.com/repos/${OWNER}/${REPO}/actions/runs/${run.id}`,
-                    { headers }
-                  );
+                  try {
+                    console.log(`Deleting workflow run: ${run.id} (${run.conclusion})`);
+                    await axios.delete(
+                      `https://api.github.com/repos/${OWNER}/${REPO}/actions/runs/${run.id}`,
+                      { headers }
+                    );
+                    totalDeleted++;
+                  } catch (deleteError) {
+                    console.warn(`Failed to delete run ${run.id}:`, deleteError.response?.data?.message || deleteError.message);
+                  }
                 }
 
                 hasMore = runs.length === 100;
                 page++;
               }
 
-              console.log('Cleanup completed successfully.');
+              console.log(`Cleanup completed successfully. Deleted ${totalDeleted} workflow runs.`);
             } catch (error) {
               console.error('Error during cleanup:', error.response?.data || error.message);
+              // Don't fail the workflow if cleanup fails
+              process.exit(0);
             }
           }
 
