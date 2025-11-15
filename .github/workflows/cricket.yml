@@ -21,6 +21,7 @@ jobs:
             inotify-tools \
             curl \
             wget \
+            jq \
             software-properties-common \
             apt-transport-https \
             ca-certificates \
