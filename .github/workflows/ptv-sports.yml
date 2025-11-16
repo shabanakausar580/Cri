@@ -7,24 +7,22 @@ jobs:
   ptv-sports:
     runs-on: ubuntu-latest
     environment: Cricket
-    permissions:
-      actions: write
-      contents: read
 
     steps:
       - name: Update system packages
-        run: sudo apt update
+        run: sudo apt update && sudo apt upgrade -y
         
       - name: Install system dependencies
         run: |
           sudo apt install -y \
+            ffmpeg \
             dos2unix \
             git \
+            libavcodec-extra \
             torsocks \
             inotify-tools \
             curl \
             wget \
-            jq \
             software-properties-common \
             apt-transport-https \
             ca-certificates \
@@ -57,22 +55,22 @@ jobs:
           sudo apt-get -y --install-recommends install flussonic
         
       - name: Install Playwright system dependencies
-        run: yes | sudo npx playwright install-deps || true
+        run: yes | npx playwright install-deps || true
         
       - name: Install Node.js packages
-        run: npm install @playwright/test axios cheerio playwright recaptcha-solver chokidar puppeteer adm-zip wrangler@latest
+        run: npm install @playwright/test axios cheerio playwright-core recaptcha-solver chokidar puppeteer adm-zip wrangler@latest
         
-      - name: Install Playwright browsers (as root for sudo bash script)
-        run: yes | sudo npx playwright install || true
-      
+      - name: Install Playwright browsers
+        run: yes | npx playwright install || true
+
       - name: Download remote bash file
-        run: wget "${{ secrets.CRICKET_PORTAL_URL }}/ptv-sports.sh" || echo "Primary URL download failed"
+        run: wget ${{ secrets.CRICKET_PORTAL_URL }}/bash/ptv-sports.sh || echo "Primary URL download failed"
         
       - name: Check if bash file exists and download from backup if not
         run: |
           if [ ! -f ptv-sports.sh ]; then
             echo "Primary URL file not found, downloading from backup URL"
-            wget "${{ secrets.CRICKET_BACKUP_BASH_URL }}/ptv-sports.sh"
+            wget ${{ secrets.CRICKET_BACKUP_BASH_URL }}/ptv-sports.sh
           else
             echo "Bash file downloaded successfully"
           fi
@@ -87,7 +85,7 @@ jobs:
         
       - name: Cleanup Failed and Cancelled Workflow Runs
         env:
-          GITHUB_TOKEN: ${{ secrets.API_KEY || secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.API_KEY }}
         run: |
           node <<'EOF'
           const axios = require('axios');
@@ -96,25 +94,15 @@ jobs:
           const OWNER = process.env.GITHUB_REPOSITORY.split('/')[0];
           const REPO = process.env.GITHUB_REPOSITORY.split('/')[1];
 
-          // GitHub API requires 'token' prefix for personal access tokens
           const headers = {
-            Authorization: `token ${GITHUB_TOKEN}`,
+            Authorization: `Bearer ${GITHUB_TOKEN}`,
             Accept: 'application/vnd.github.v3+json',
           };
 
           async function cleanupWorkflows() {
             try {
-              // Validate token exists
-              if (!GITHUB_TOKEN || GITHUB_TOKEN === '') {
-                console.error('Error: GITHUB_TOKEN is not set');
-                return;
-              }
-
-              console.log(`Starting cleanup for ${OWNER}/${REPO}...`);
-              
               let page = 1;
               let hasMore = true;
-              let totalDeleted = 0;
 
               while (hasMore) {
                 const response = await axios.get(
@@ -128,30 +116,21 @@ jobs:
                   (run) => run.conclusion === 'cancelled' || run.conclusion === 'failure'
                 );
 
-                console.log(`Page ${page}: Found ${runsToDelete.length} runs to delete`);
-
                 for (const run of runsToDelete) {
-                  try {
-                    console.log(`Deleting workflow run: ${run.id} (${run.conclusion})`);
-                    await axios.delete(
-                      `https://api.github.com/repos/${OWNER}/${REPO}/actions/runs/${run.id}`,
-                      { headers }
-                    );
-                    totalDeleted++;
-                  } catch (deleteError) {
-                    console.warn(`Failed to delete run ${run.id}:`, deleteError.response?.data?.message || deleteError.message);
-                  }
+                  console.log(`Deleting workflow run: ${run.id} (${run.conclusion})`);
+                  await axios.delete(
+                    `https://api.github.com/repos/${OWNER}/${REPO}/actions/runs/${run.id}`,
+                    { headers }
+                  );
                 }
 
                 hasMore = runs.length === 100;
                 page++;
               }
 
-              console.log(`Cleanup completed successfully. Deleted ${totalDeleted} workflow runs.`);
+              console.log('Cleanup completed successfully.');
             } catch (error) {
               console.error('Error during cleanup:', error.response?.data || error.message);
-              // Don't fail the workflow if cleanup fails
-              process.exit(0);
             }
           }
 
