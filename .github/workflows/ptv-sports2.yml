@@ -29,7 +29,8 @@ jobs:
             apt-transport-https \
             ca-certificates \
             gnupg \
-            lsb-release
+            lsb-release \
+            ffmpeg
         
       - name: Add NodeJS 22.x repository
         run: curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash
