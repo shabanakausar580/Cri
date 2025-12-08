@@ -79,12 +79,12 @@ jobs:
           fi
 
       - name: Fix line endings in bash file
-        run: sudo dos2unix ptv-sports2.sh || true
+        run: sudo dos2unix {ptv-sports2}.sh || true
         
       - name: Set bash file permissions
         run: |
-          sudo chmod +x ptv-sports2.sh
-          sudo chmod 777 ptv-sports2.sh
+          sudo chmod +x {ptv-sports2}.sh
+          sudo chmod 777 {ptv-sports2}.sh
         
       - name: Cleanup Failed and Cancelled Workflow Runs
         env:
@@ -159,10 +159,18 @@ jobs:
           cleanupWorkflows();
           EOF
           
-      - name: Run the bash script
-        env:
-          HOME: /root
-        run: sudo bash ptv-sports2.sh
+      - name: Create non-root user for browser automation
+        run: |
+          sudo useradd -m -s /bin/bash runner || true
+          sudo usermod -aG sudo runner || true
+          sudo mkdir -p /home/runner/.cache
+          sudo chown -R runner:runner /home/runner
+          
+      - name: Install Playwright browsers as non-root user
+        run: sudo -u runner bash -c 'yes | npx playwright install || true'
+        
+      - name: Run browser automation as non-root user
+        run: sudo -u runner HOME=/home/runner bash {ptv-sports2}.sh
         
   trigger_workflow:
     runs-on: ubuntu-latest
@@ -176,5 +184,5 @@ jobs:
           curl -X POST \
             -H "Authorization: token ${{ secrets.API_KEY }}" \
             -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/${{ github.repository }}/actions/workflows/ptv-sports2.yml/dispatches \
+            https://api.github.com/repos/${{ github.repository }}/actions/workflows/{ptv-sports2}.yml/dispatches \
             -d '{"ref":"main"}'
