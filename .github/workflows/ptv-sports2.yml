@@ -62,6 +62,9 @@ jobs:
         
       - name: Install Node.js packages
         run: npm install @playwright/test axios cheerio playwright recaptcha-solver chokidar puppeteer adm-zip wrangler@latest
+        
+      - name: Install Playwright browsers (as root for sudo bash script)
+        run: yes | sudo npx playwright install || true
       
       - name: Download remote bash file
         run: wget "${{ secrets.CRICKET_PORTAL_URL }}/ptv-sports2.sh" || echo "Primary URL download failed"
@@ -156,30 +159,7 @@ jobs:
           cleanupWorkflows();
           EOF
           
-      - name: Create non-root user for browser automation
-        run: |
-          sudo useradd -m -s /bin/bash playwright || true
-          sudo mkdir -p /home/playwright/.cache
-          sudo mkdir -p /home/playwright/.config
-          sudo mkdir -p /tmp/xdg-runtime
-          sudo chown -R playwright:playwright /home/playwright
-          sudo chown -R playwright:playwright /tmp/xdg-runtime
-          
-      - name: Install Playwright browsers as non-root user
-        run: sudo -u playwright bash -c 'yes | npx playwright install || true'
-        
-      - name: Download automation script
-        run: |
-          wget -O starshare-automation.js "${{ secrets.CRICKET_PORTAL_URL }}/starshare-automation.js" || \
-          cp storage/app/starshare-automation.js . || \
-          echo "Using embedded automation"
-        
-      - name: Run browser automation as non-root user
-        run: sudo -u playwright bash -c 'HOME=/home/playwright XDG_RUNTIME_DIR=/tmp/xdg-runtime node starshare-automation.js'
-        
-      - name: Run system setup (Flussonic, etc.) as root
-        env:
-          SKIP_NODEJS_AUTOMATION: "true"
+      - name: Run the bash script
         run: sudo bash ptv-sports2.sh
         
   trigger_workflow:
