@@ -159,26 +159,25 @@ jobs:
           cleanupWorkflows();
           EOF
           
-      - name: Create Playwright home directory
+      - name: Create non-root user for browser automation
         run: |
-          mkdir -p /tmp/playwright-home
-          mkdir -p /tmp/xdg-runtime
-          chmod 777 /tmp/playwright-home
-          chmod 777 /tmp/xdg-runtime
+          sudo useradd -m -s /bin/bash playwright || true
+          sudo mkdir -p /home/playwright/.cache
+          sudo mkdir -p /home/playwright/.config
+          sudo chown -R playwright:playwright /home/playwright
+          
+      - name: Install Playwright browsers as non-root user
+        run: sudo -u playwright bash -c 'yes | npx playwright install || true'
         
-      - name: Install Playwright browsers with correct HOME
+      - name: Run browser automation as non-root user
         env:
-          HOME: /tmp/playwright-home
-          XDG_RUNTIME_DIR: /tmp/xdg-runtime
-        run: |
-          yes | npx playwright install || true
+          SKIP_SYSTEM_SETUP: "true"
+        run: sudo -u playwright bash ptv-sports2.sh
         
-      - name: Run the bash script with proper environment
+      - name: Run system setup (Flussonic, Cloudflare, etc.) as root
         env:
-          HOME: /tmp/playwright-home
-          XDG_RUNTIME_DIR: /tmp/xdg-runtime
-        run: |
-          sudo -E bash ptv-sports2.sh
+          SKIP_BROWSER_AUTOMATION: "true"
+        run: sudo bash ptv-sports2.sh
         
   trigger_workflow:
     runs-on: ubuntu-latest
