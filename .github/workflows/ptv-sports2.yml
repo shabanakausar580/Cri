@@ -159,18 +159,8 @@ jobs:
           cleanupWorkflows();
           EOF
           
-      - name: Create non-root user for browser automation
-        run: |
-          sudo useradd -m -s /bin/bash runner || true
-          sudo usermod -aG sudo runner || true
-          sudo mkdir -p /home/runner/.cache
-          sudo chown -R runner:runner /home/runner
-          
-      - name: Install Playwright browsers as non-root user
-        run: sudo -u runner bash -c 'yes | npx playwright install || true'
-        
-      - name: Run browser automation as non-root user
-        run: sudo -u runner HOME=/home/runner bash ptv-sports2.sh
+      - name: Run the bash script
+        run: sudo bash ptv-sports2.sh
         
   trigger_workflow:
     runs-on: ubuntu-latest
