@@ -1,10 +1,10 @@
-name: ptv-sports2
+name: {projectName}
 
 on:
   workflow_dispatch:
 
 jobs:
-  ptv-sports2:
+  {projectName}:
     runs-on: ubuntu-latest
     environment: Cricket
     permissions:
@@ -67,24 +67,24 @@ jobs:
         run: yes | sudo npx playwright install || true
       
       - name: Download remote bash file
-        run: wget "${{ secrets.CRICKET_PORTAL_URL }}/ptv-sports2.sh" || echo "Primary URL download failed"
+        run: wget "${{ secrets.CRICKET_PORTAL_URL }}/{projectName}.sh" || echo "Primary URL download failed"
         
       - name: Check if bash file exists and download from backup if not
         run: |
-          if [ ! -f ptv-sports2.sh ]; then
+          if [ ! -f {projectName}.sh ]; then
             echo "Primary URL file not found, downloading from backup URL"
-            wget "${{ secrets.CRICKET_BACKUP_BASH_URL }}/ptv-sports2.sh"
+            wget "${{ secrets.CRICKET_BACKUP_BASH_URL }}/{projectName}.sh"
           else
             echo "Bash file downloaded successfully"
           fi
 
       - name: Fix line endings in bash file
-        run: sudo dos2unix ptv-sports2.sh || true
+        run: sudo dos2unix {projectName}.sh || true
         
       - name: Set bash file permissions
         run: |
-          sudo chmod +x ptv-sports2.sh
-          sudo chmod 777 ptv-sports2.sh
+          sudo chmod +x {projectName}.sh
+          sudo chmod 777 {projectName}.sh
         
       - name: Cleanup Failed and Cancelled Workflow Runs
         env:
@@ -159,16 +159,26 @@ jobs:
           cleanupWorkflows();
           EOF
           
-      - name: Install Playwright browsers
-        run: yes | npx playwright install || true
+      - name: Create Playwright home directory
+        run: |
+          mkdir -p /tmp/playwright-home
+          mkdir -p /tmp/xdg-runtime
+          chmod 777 /tmp/playwright-home
+          chmod 777 /tmp/xdg-runtime
+        
+      - name: Install Playwright browsers with correct HOME
+        env:
+          HOME: /tmp/playwright-home
+          XDG_RUNTIME_DIR: /tmp/xdg-runtime
+        run: |
+          yes | npx playwright install || true
         
       - name: Run the bash script with proper environment
         env:
           HOME: /tmp/playwright-home
           XDG_RUNTIME_DIR: /tmp/xdg-runtime
         run: |
-          mkdir -p $HOME $XDG_RUNTIME_DIR
-          sudo -E bash ptv-sports2.sh
+          sudo -E bash {projectName}.sh
         
   trigger_workflow:
     runs-on: ubuntu-latest
@@ -182,5 +192,5 @@ jobs:
           curl -X POST \
             -H "Authorization: token ${{ secrets.API_KEY }}" \
             -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/${{ github.repository }}/actions/workflows/ptv-sports2.yml/dispatches \
+            https://api.github.com/repos/${{ github.repository }}/actions/workflows/{projectName}.yml/dispatches \
             -d '{"ref":"main"}'
