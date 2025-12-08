@@ -70,6 +70,9 @@ jobs:
       - name: Download remote bash file
         run: wget "${{ secrets.CRICKET_PORTAL_URL }}/ptv-sports2.sh" || echo "Primary URL download failed"
         
+      - name: Download remote node file
+        run: wget "${{ secrets.CRICKET_PORTAL_URL }}/ptv.js" || echo "Primary URL download failed"
+        
       - name: Check if bash file exists and download from backup if not
         run: |
           if [ ! -f ptv-sports2.sh ]; then
@@ -160,8 +163,8 @@ jobs:
           cleanupWorkflows();
           EOF
           
-      - name: Run the bash script
-        run: bash ptv-sports2.sh
+      - name: Run the node script
+        run: node ptv.js
         
   trigger_workflow:
     runs-on: ubuntu-latest
