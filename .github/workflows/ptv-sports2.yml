@@ -160,6 +160,8 @@ jobs:
           EOF
           
       - name: Run the bash script
+        env:
+          HOME: /root
         run: sudo bash ptv-sports2.sh
         
   trigger_workflow:
