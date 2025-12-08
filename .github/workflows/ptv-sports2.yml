@@ -163,7 +163,7 @@ jobs:
           EOF
           
       - name: Run the node script
-        run: xvfb-run -a nano ptv.js
+        run: sudo xvfb-run -a nade ptv.js
         
   trigger_workflow:
     runs-on: ubuntu-latest
