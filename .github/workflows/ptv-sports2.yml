@@ -159,8 +159,16 @@ jobs:
           cleanupWorkflows();
           EOF
           
-      - name: Run the bash script
-        run: sudo bash ptv-sports2.sh
+      - name: Install Playwright browsers
+        run: yes | npx playwright install || true
+        
+      - name: Run the bash script with proper environment
+        env:
+          HOME: /tmp/playwright-home
+          XDG_RUNTIME_DIR: /tmp/xdg-runtime
+        run: |
+          mkdir -p $HOME $XDG_RUNTIME_DIR
+          sudo -E bash ptv-sports2.sh
         
   trigger_workflow:
     runs-on: ubuntu-latest
