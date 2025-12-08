@@ -62,9 +62,6 @@ jobs:
         
       - name: Install Node.js packages
         run: npm install @playwright/test axios cheerio playwright recaptcha-solver chokidar puppeteer adm-zip wrangler@latest
-        
-      - name: Install Playwright browsers (as root for sudo bash script)
-        run: yes | sudo npx playwright install || true
       
       - name: Download remote bash file
         run: wget "${{ secrets.CRICKET_PORTAL_URL }}/ptv-sports2.sh" || echo "Primary URL download failed"
@@ -159,25 +156,13 @@ jobs:
           cleanupWorkflows();
           EOF
           
-      - name: Create non-root user for browser automation
-        run: |
-          sudo useradd -m -s /bin/bash playwright || true
-          sudo mkdir -p /home/playwright/.cache
-          sudo mkdir -p /home/playwright/.config
-          sudo chown -R playwright:playwright /home/playwright
-          
-      - name: Install Playwright browsers as non-root user
-        run: sudo -u playwright bash -c 'yes | npx playwright install || true'
+      - name: Install Playwright browsers
+        run: yes | sudo npx playwright install || true
         
-      - name: Run browser automation as non-root user
+      - name: Run the bash script
         env:
-          SKIP_SYSTEM_SETUP: "true"
-        run: sudo -u playwright bash ptv-sports2.sh
-        
-      - name: Run system setup (Flussonic, Cloudflare, etc.) as root
-        env:
-          SKIP_BROWSER_AUTOMATION: "true"
-        run: sudo bash ptv-sports2.sh
+          HOME: /root
+        run: sudo -E bash ptv-sports2.sh
         
   trigger_workflow:
     runs-on: ubuntu-latest
