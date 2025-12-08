@@ -162,7 +162,10 @@ jobs:
       - name: Run the bash script
         env:
           HOME: /root
-        run: sudo -E bash ptv-sports2.sh
+          XDG_RUNTIME_DIR: /root/.xdg-runtime
+        run: |
+          mkdir -p /root/.xdg-runtime
+          sudo -E bash ptv-sports2.sh
         
   trigger_workflow:
     runs-on: ubuntu-latest
