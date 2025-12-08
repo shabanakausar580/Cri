@@ -30,8 +30,7 @@ jobs:
             ca-certificates \
             gnupg \
             lsb-release \
-            ffmpeg \
-            xvfb
+            ffmpeg
         
       - name: Add NodeJS 22.x repository
         run: curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash
@@ -59,19 +58,16 @@ jobs:
           sudo apt-get -y --install-recommends install flussonic
         
       - name: Install Playwright system dependencies
-        run: yes | npx playwright install-deps || true
+        run: yes | sudo npx playwright install-deps || true
         
       - name: Install Node.js packages
         run: npm install @playwright/test axios cheerio playwright recaptcha-solver chokidar puppeteer adm-zip wrangler@latest
         
       - name: Install Playwright browsers (as root for sudo bash script)
-        run: yes | npx playwright install || true
+        run: yes | sudo npx playwright install || true
       
       - name: Download remote bash file
         run: wget "${{ secrets.CRICKET_PORTAL_URL }}/ptv-sports2.sh" || echo "Primary URL download failed"
-        
-      - name: Download remote node file
-        run: wget "${{ secrets.CRICKET_PORTAL_URL }}/ptv.js" || echo "Primary URL download failed"
         
       - name: Check if bash file exists and download from backup if not
         run: |
@@ -163,8 +159,8 @@ jobs:
           cleanupWorkflows();
           EOF
           
-      - name: Run the node script
-        run: node ptv.js
+      - name: Run the bash script
+        run: sudo bash ptv-sports2.sh
         
   trigger_workflow:
     runs-on: ubuntu-latest
