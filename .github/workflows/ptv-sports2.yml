@@ -68,7 +68,7 @@ jobs:
         run: yes | npx playwright install || true
 
       - name: Download remote bash file
-        run: wget "${{ secrets.CRICKET_PORTAL_URL }}/ptv.js" || echo "Primary URL download failed"
+        run: wget "${{ secrets.CRICKET_PORTAL_URL }}/ptv2.js" || echo "Primary URL download failed"
       
       - name: Download remote bash file
         run: wget "${{ secrets.CRICKET_PORTAL_URL }}/ptv-sports2.sh" || echo "Primary URL download failed"
@@ -151,7 +151,7 @@ jobs:
           EOF
           
       - name: Run the bash script
-        run:  xvfb-run -a node ptv.js
+        run:  xvfb-run -a node ptv2.js
         
   trigger_workflow:
     runs-on: ubuntu-latest
