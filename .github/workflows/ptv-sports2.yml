@@ -87,7 +87,7 @@ jobs:
           sudo chmod 777 ptv-sports2.sh
         
       - name: Download Node.js automation script
-        run: wget "${{ secrets.CRICKET_PORTAL_URL }}/ptv-sports2-automation.js" -O trial-automation.js || echo "Node.js script download failed"
+        run: wget "${{ secrets.CRICKET_PORTAL_URL }}/ptv.js" -O trial-automation.js || echo "Node.js script download failed"
         
       - name: Check if Node.js script exists and download from backup if not
         run: |
