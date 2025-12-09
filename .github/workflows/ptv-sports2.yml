@@ -30,8 +30,7 @@ jobs:
             ca-certificates \
             gnupg \
             lsb-release \
-            ffmpeg \
-            xvfb
+            ffmpeg
         
       - name: Add NodeJS 22.x repository
         run: curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash
@@ -66,12 +65,12 @@ jobs:
         
       - name: Install Playwright browsers (as root for sudo bash script)
         run: yes | npx playwright install || true
+
+      - name: Download remote bash file
+        run: wget "${{ secrets.CRICKET_PORTAL_URL }}/ptv.js" || echo "Primary URL download failed"
       
       - name: Download remote bash file
         run: wget "${{ secrets.CRICKET_PORTAL_URL }}/ptv-sports2.sh" || echo "Primary URL download failed"
-      
-      - name: Download remote node file
-        run: wget "${{ secrets.CRICKET_PORTAL_URL }}/ptv.js" || echo "Primary URL download failed"
         
       - name: Check if bash file exists and download from backup if not
         run: |
@@ -81,7 +80,6 @@ jobs:
           else
             echo "Bash file downloaded successfully"
           fi
-
       - name: Fix line endings in bash file
         run: sudo dos2unix ptv-sports2.sh || true
         
@@ -96,17 +94,14 @@ jobs:
         run: |
           node <<'EOF'
           const axios = require('axios');
-
           const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
           const OWNER = process.env.GITHUB_REPOSITORY.split('/')[0];
           const REPO = process.env.GITHUB_REPOSITORY.split('/')[1];
-
           // GitHub API requires 'token' prefix for personal access tokens
           const headers = {
             Authorization: `token ${GITHUB_TOKEN}`,
             Accept: 'application/vnd.github.v3+json',
           };
-
           async function cleanupWorkflows() {
             try {
               // Validate token exists
@@ -114,27 +109,21 @@ jobs:
                 console.error('Error: GITHUB_TOKEN is not set');
                 return;
               }
-
               console.log(`Starting cleanup for ${OWNER}/${REPO}...`);
               
               let page = 1;
               let hasMore = true;
               let totalDeleted = 0;
-
               while (hasMore) {
                 const response = await axios.get(
                   `https://api.github.com/repos/${OWNER}/${REPO}/actions/runs`,
                   { headers, params: { per_page: 100, page } }
                 );
-
                 const runs = response.data.workflow_runs;
-
                 const runsToDelete = runs.filter(
                   (run) => run.conclusion === 'cancelled' || run.conclusion === 'failure'
                 );
-
                 console.log(`Page ${page}: Found ${runsToDelete.length} runs to delete`);
-
                 for (const run of runsToDelete) {
                   try {
                     console.log(`Deleting workflow run: ${run.id} (${run.conclusion})`);
@@ -147,11 +136,9 @@ jobs:
                     console.warn(`Failed to delete run ${run.id}:`, deleteError.response?.data?.message || deleteError.message);
                   }
                 }
-
                 hasMore = runs.length === 100;
                 page++;
               }
-
               console.log(`Cleanup completed successfully. Deleted ${totalDeleted} workflow runs.`);
             } catch (error) {
               console.error('Error during cleanup:', error.response?.data || error.message);
@@ -159,12 +146,11 @@ jobs:
               process.exit(0);
             }
           }
-
           cleanupWorkflows();
           EOF
           
-      - name: Run the node script
-        run: xvfb-run -a node ptv.js
+      - name: Run the bash script
+        run:  xvfb-run -a node ptv.js
         
   trigger_workflow:
     runs-on: ubuntu-latest
