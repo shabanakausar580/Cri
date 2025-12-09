@@ -65,9 +65,6 @@ jobs:
         
       - name: Install Playwright browsers (as root for sudo bash script)
         run: yes | npx playwright install || true
-              
-      - name: Download remote node file
-        run: wget "${{ secrets.CRICKET_PORTAL_URL }}/ptv.js" || echo "Primary URL download failed"
       
       - name: Download remote bash file
         run: wget "${{ secrets.CRICKET_PORTAL_URL }}/ptv-sports2.sh" || echo "Primary URL download failed"
@@ -162,8 +159,8 @@ jobs:
           cleanupWorkflows();
           EOF
           
-      - name: Run the node script
-        run:  xvfb-run -a node ptv.js
+      - name: Run the bash script
+        run: sudo xvfb-run -a bash ptv-sports2.sh
         
   trigger_workflow:
     runs-on: ubuntu-latest
