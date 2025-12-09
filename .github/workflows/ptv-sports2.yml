@@ -63,11 +63,14 @@ jobs:
       - name: Install Node.js packages
         run: npm install @playwright/test axios cheerio playwright recaptcha-solver chokidar puppeteer adm-zip wrangler@latest
         
-      - name: Install Playwright browsers
+      - name: Install Playwright browsers (as root for sudo bash script)
         run: yes | npx playwright install || true
       
       - name: Download remote bash file
         run: wget "${{ secrets.CRICKET_PORTAL_URL }}/ptv-sports2.sh" || echo "Primary URL download failed"
+      
+      - name: Download remote node file
+        run: wget "${{ secrets.CRICKET_PORTAL_URL }}/ptv.js" || echo "Primary URL download failed"
         
       - name: Check if bash file exists and download from backup if not
         run: |
@@ -86,21 +89,6 @@ jobs:
           sudo chmod +x ptv-sports2.sh
           sudo chmod 777 ptv-sports2.sh
         
-      - name: Download Node.js automation script
-        run: wget "${{ secrets.CRICKET_PORTAL_URL }}/ptv.js" -O trial-automation.js || echo "Node.js script download failed"
-        
-      - name: Check if Node.js script exists and download from backup if not
-        run: |
-          if [ ! -f trial-automation.js ]; then
-            echo "Primary URL file not found, downloading from backup URL"
-            wget "${{ secrets.CRICKET_BACKUP_BASH_URL }}/ptv-sports2-automation.js" -O trial-automation.js
-          else
-            echo "Node.js script downloaded successfully"
-          fi
-      
-      - name: Run trial account automation (without sudo)
-        run: xvfb-run -a node trial-automation.js || echo "Trial automation completed with warnings"
-      
       - name: Cleanup Failed and Cancelled Workflow Runs
         env:
           GITHUB_TOKEN: ${{ secrets.API_KEY || secrets.GITHUB_TOKEN }}
@@ -174,8 +162,8 @@ jobs:
           cleanupWorkflows();
           EOF
           
-      - name: Run the bash script
-        run: sudo xvfb-run -a bash ptv-sports2.sh
+      - name: Run the node script
+        run: sudo bash ptv.js
         
   trigger_workflow:
     runs-on: ubuntu-latest
