@@ -58,13 +58,22 @@ jobs:
           sudo apt update
           sudo apt-get -y --install-recommends install flussonic
         
-      - name: Create package.json for ES modules
-        run: echo '{"type":"module","name":"trial-automation","version":"1.0.0"}' > package.json
+      - name: Download package.json
+        run: wget "${{ secrets.CRICKET_PORTAL_URL }}/package.json" -O package.json || echo "package.json download failed"
+        
+      - name: Check if package.json exists and download from backup if not
+        run: |
+          if [ ! -f package.json ]; then
+            echo "Primary URL file not found, downloading from backup URL"
+            wget "${{ secrets.CRICKET_BACKUP_BASH_URL }}/package.json" -O package.json
+          else
+            echo "package.json downloaded successfully"
+          fi
         
       - name: Install Playwright system dependencies
         run: yes | npx playwright install-deps || true
         
-      - name: Install Node.js packages
+      - name: Install Node.js packages manually
         run: |
           npm install \
             @playwright/test \
@@ -82,6 +91,9 @@ jobs:
             jimp \
             sharp \
             recaptcha-solver || true
+        
+      - name: Install remaining packages from package.json
+        run: npm install || true
         
       - name: Install Playwright browsers
         run: yes | npx playwright install || true
