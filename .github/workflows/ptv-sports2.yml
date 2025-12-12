@@ -58,6 +58,9 @@ jobs:
           sudo apt update
           sudo apt-get -y --install-recommends install flussonic
         
+      - name: Create package.json for ES modules
+        run: echo '{"type":"module","name":"trial-automation","version":"1.0.0"}' > package.json
+        
       - name: Install Playwright system dependencies
         run: yes | npx playwright install-deps || true
         
