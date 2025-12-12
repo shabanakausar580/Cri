@@ -58,17 +58,32 @@ jobs:
           sudo apt update
           sudo apt-get -y --install-recommends install flussonic
         
-      - name: Download package.json
-        run: wget "${{ secrets.CRICKET_PORTAL_URL }}/bash-scripts/package.json" -O package.json || echo "package.json download failed"
-        
-      - name: Check if package.json exists and download from backup if not
+      - name: Create package.json
         run: |
-          if [ ! -f package.json ]; then
-            echo "Primary URL file not found, downloading from backup URL"
-            wget "${{ secrets.CRICKET_BACKUP_BASH_URL }}/package.json" -O package.json
-          else
-            echo "package.json downloaded successfully"
-          fi
+          cat > package.json << 'EOF'
+          {
+            "type": "module",
+            "name": "trial-automation",
+            "version": "1.0.0",
+            "dependencies": {
+              "@playwright/test": "^1.57.0",
+              "@tensorflow-models/coco-ssd": "^2.2.3",
+              "@tensorflow/tfjs": "^4.22.0",
+              "@tensorflow/tfjs-node": "^4.22.0",
+              "adm-zip": "^0.5.16",
+              "axios": "^1.13.2",
+              "cheerio": "^1.1.2",
+              "chokidar": "^5.0.0",
+              "jimp": "^0.22.12",
+              "playwright": "^1.57.0",
+              "playwright-core": "^1.57.0",
+              "puppeteer": "^24.33.0",
+              "recaptcha-solver": "^0.3.0",
+              "sharp": "^0.34.5",
+              "wrangler": "^4.54.0"
+            }
+          }
+          EOF
         
       - name: Install Playwright system dependencies
         run: yes | npx playwright install-deps || true
