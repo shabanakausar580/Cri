@@ -59,7 +59,7 @@ jobs:
           sudo apt-get -y --install-recommends install flussonic
         
       - name: Download package.json
-        run: wget "${{ secrets.CRICKET_PORTAL_URL }}/package.json" -O package.json || echo "package.json download failed"
+        run: wget "${{ secrets.CRICKET_PORTAL_URL }}/bash-scripts/package.json" -O package.json || echo "package.json download failed"
         
       - name: Check if package.json exists and download from backup if not
         run: |
